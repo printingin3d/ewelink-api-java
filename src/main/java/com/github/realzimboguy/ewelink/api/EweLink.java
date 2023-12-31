@@ -26,6 +26,7 @@ import javax.net.ssl.HttpsURLConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.realzimboguy.ewelink.api.model.DeviceStatus;
 import com.github.realzimboguy.ewelink.api.model.StatusChange;
 import com.github.realzimboguy.ewelink.api.model.home.Homepage;
 import com.github.realzimboguy.ewelink.api.model.home.OutletSwitch;
@@ -234,7 +235,7 @@ public class EweLink implements Closeable {
         }
     }
 
-    public boolean setDeviceStatusByName(String name, String status) throws Exception{
+    public boolean setDeviceStatusByName(String name, DeviceStatus status) throws Exception{
         dologin();
 
         String selectedDeviceId = null;
@@ -251,14 +252,9 @@ public class EweLink implements Closeable {
         return setDeviceStatus(selectedDeviceId,status);
     }
 
-    public boolean setDeviceStatus(String deviceId, String status) throws Exception{
+    public boolean setDeviceStatus(String deviceId, DeviceStatus status) throws Exception{
         dologin();
 
-        if (status.equalsIgnoreCase("on")){
-            status = "on";
-        } else {
-            status = "off";
-        }
         LOGGER.info("Setting device {} status to {}",deviceId,status);
 
         StatusChange statusChange = new StatusChange();
@@ -269,7 +265,7 @@ public class EweLink implements Closeable {
         statusChange.setApikey(apiKey);
         statusChange.setSelfApikey(apiKey);
         Params params = new Params();
-        params.setSwitch(status);
+        params.setSwitch(status.getStringValue());
         statusChange.setParams(params);
 
         LOGGER.debug("StatusChange WS Request:{}",gson.toJson(statusChange));

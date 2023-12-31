@@ -6,7 +6,7 @@
 
     <groupId>eu.printingin3d.ewelink.api</groupId>
     <artifactId>ewelink-api-java</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
     <packaging>jar</packaging>
 
     <name>ewelink-api-java</name>

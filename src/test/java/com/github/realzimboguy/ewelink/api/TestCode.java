@@ -5,6 +5,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.realzimboguy.ewelink.api.model.DeviceStatus;
 import com.github.realzimboguy.ewelink.api.model.home.Thing;
 import com.github.realzimboguy.ewelink.api.wss.WssResponse;
 import com.github.realzimboguy.ewelink.api.wss.wssrsp.WssRspMsg;
@@ -82,9 +83,9 @@ public class TestCode {
 
 
             Thread.sleep(10000);
-            System.out.println(eweLink.setDeviceStatus("1000f40d35", "on"));
+            System.out.println(eweLink.setDeviceStatus("1000f40d35", DeviceStatus.ON));
             Thread.sleep(5000);
-            System.out.println(eweLink.setDeviceStatus("1000f40d35", "off"));
+            System.out.println(eweLink.setDeviceStatus("1000f40d35", DeviceStatus.OFF));
 
 
 
