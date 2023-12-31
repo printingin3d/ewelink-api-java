@@ -4,9 +4,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.github.realzimboguy.ewelink.api</groupId>
+    <groupId>eu.printingin3d.ewelink.api</groupId>
     <artifactId>ewelink-api-java</artifactId>
-    <version>3.1.0-RELEASE</version>
+    <version>1.0.0</version>
     <packaging>jar</packaging>
 
     <name>ewelink-api-java</name>
@@ -16,16 +16,10 @@
         This project provides a wrapping api access to the sonoff ewelink api, check https://github.com/RealZimboGuy/ewelink-api-java
     </description>
 
-    <parent>
-        <groupId>org.sonatype.oss</groupId>
-        <artifactId>oss-parent</artifactId>
-        <version>7</version>
-    </parent>
-
     <scm>
-        <connection>scm:git:https://github.com/RealZimboGuy/ewelink-api-java.git</connection>
-        <developerConnection>scm:git:https://github.com/RealZimboGuy/ewelink-api-java.git</developerConnection>
-        <url>https://github.com/RealZimboGuy/ewelink-api-java</url>
+        <connection>scm:git:https://github.com/printingin3d/ewelink-api-java.git</connection>
+        <developerConnection>scm:git:https://github.com/printingin3d/ewelink-api-java.git</developerConnection>
+        <url>https://github.com/printingin3d/ewelink-api-java</url>
     </scm>
 
     <developers>
@@ -39,6 +33,10 @@
         </developer>
 
     </developers>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
 
     <licenses>
         <license>

@@ -1,15 +1,14 @@
 package com.github.realzimboguy.ewelink.api;
 
-import com.github.realzimboguy.ewelink.api.errors.DeviceOfflineError;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.github.realzimboguy.ewelink.api.model.home.Thing;
 import com.github.realzimboguy.ewelink.api.wss.WssResponse;
 import com.github.realzimboguy.ewelink.api.wss.wssrsp.WssRspMsg;
 import com.google.gson.Gson;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.LinkedList;
-import java.util.List;
 
 public class TestCode {
 
@@ -23,10 +22,7 @@ public class TestCode {
         EweLink eweLink = new EweLink("eu", "test@gmail.com", "test", "+263",60);
 
         try {
-            eweLink.login();
-
             List<Thing> things = eweLink.getThings();
-
 
             logger.info("PRINT DEVICE_ID, NAME, ONLINE, SWITCH, VOLTAGE");
             for (Thing thing : things) {
@@ -42,7 +38,7 @@ public class TestCode {
                 logger.info("{} ",gson.toJson(thing));
             }
 
-            eweLink.getWebSocket(new WssResponse() {
+            eweLink.setWssResponse(new WssResponse() {
 
                 @Override
                 public void onMessage(String s) {

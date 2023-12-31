@@ -11,6 +11,16 @@ public class LoginRequest {
     private String romVersion;
     private String appVersion;
 
+    public LoginRequest() {
+    }
+    
+    public LoginRequest(String email, String password, String countryCode, String lang) {
+        this.email = email;
+        this.password = password;
+        this.countryCode = countryCode;
+        this.lang = lang;
+    }
+    
     public String getLang() {
         return lang;
     }

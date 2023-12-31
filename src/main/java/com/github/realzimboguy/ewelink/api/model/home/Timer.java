@@ -25,7 +25,7 @@ public class Timer {
     private Integer enabled;
     @SerializedName("do")
     @Expose
-    private Do__1 _do;
+    private Do _do;
 
     public String getmId() {
         return mId;
@@ -67,11 +67,11 @@ public class Timer {
         this.enabled = enabled;
     }
 
-    public Do__1 getDo() {
+    public Do getDo() {
         return _do;
     }
 
-    public void setDo(Do__1 _do) {
+    public void setDo(Do _do) {
         this._do = _do;
     }
 

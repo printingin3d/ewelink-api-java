@@ -9,9 +9,9 @@ public class WssLogin {
     private String apikey;
     private String appid;
     private String nonce;
-    private Long ts;
+    private long ts;
     private String userAgent = "app";
-    private Long sequence;
+    private long sequence;
     private int version = 8;
 
     public WssLogin(String at, String apikey, String appid,String nonce) {
@@ -63,11 +63,11 @@ public class WssLogin {
         this.nonce = nonce;
     }
 
-    public Long getTs() {
+    public long getTs() {
         return ts;
     }
 
-    public void setTs(Long ts) {
+    public void setTs(long ts) {
         this.ts = ts;
     }
 
@@ -79,11 +79,11 @@ public class WssLogin {
         this.userAgent = userAgent;
     }
 
-    public Long getSequence() {
+    public long getSequence() {
         return sequence;
     }
 
-    public void setSequence(Long sequence) {
+    public void setSequence(long sequence) {
         this.sequence = sequence;
     }
 

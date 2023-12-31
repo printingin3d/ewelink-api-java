@@ -3,10 +3,10 @@ package com.github.realzimboguy.ewelink.api.wss.wssrsp;
 
 
 
-import com.github.realzimboguy.ewelink.api.model.home.Params;
-
 import java.util.HashMap;
 import java.util.Map;
+
+import com.github.realzimboguy.ewelink.api.model.home.Params;
 
 public class WssRspMsg {
 
@@ -20,7 +20,7 @@ public class WssRspMsg {
     private Config config;
     private String seq;
     private String sequence;
-    private Map<String, Object> additionalProperties = new HashMap<String, Object>();
+    private Map<String, Object> additionalProperties = new HashMap<>();
 
     public Integer getError() {
         return error;

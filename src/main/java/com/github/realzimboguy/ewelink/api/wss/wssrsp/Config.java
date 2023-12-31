@@ -5,10 +5,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Config {
-
     private Integer hb;
     private Integer hbInterval;
-    private Map<String, Object> additionalProperties = new HashMap<String, Object>();
+    private Map<String, Object> additionalProperties = new HashMap<>();
 
     public Integer getHb() {
         return hb;

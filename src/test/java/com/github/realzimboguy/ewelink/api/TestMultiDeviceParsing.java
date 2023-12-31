@@ -1,45 +1,32 @@
 package com.github.realzimboguy.ewelink.api;
 
-import com.github.realzimboguy.ewelink.api.model.home.Data;
+import static org.junit.Assert.assertEquals;
+
+import org.junit.Test;
+
 import com.github.realzimboguy.ewelink.api.model.home.Homepage;
 import com.google.gson.Gson;
-import org.junit.Assert;
-import org.junit.Test;
 
 public class TestMultiDeviceParsing {
 
-
-
 	@Test
 	public void testNormalParse() {
-
 		Gson gson = new Gson();
-
 
 		Homepage home = gson.fromJson(EXAMPLE_NORMAL, Homepage.class);
 
-		System.out.println(home);
-
-		Assert.assertEquals("off",home.getData().getThingInfo().getThingList().get(0).getItemData().getParams().getSwitch());
-
+		assertEquals("off",home.getData().getThingInfo().getThingList().get(0).getItemData().getParams().getSwitch());
 	}
 
 	@Test
 	public void testMultiChannelParse() {
-
 		Gson gson = new Gson();
-
 
 		Homepage home = gson.fromJson(EXAMPLE_MULTI_CHANNEL, Homepage.class);
 
-		System.out.println(home);
-
-		Assert.assertEquals("off",home.getData().getThingInfo().getThingList().get(0).getItemData().getParams().getSwitches().get(0).get_switch());
-		Assert.assertEquals("on",home.getData().getThingInfo().getThingList().get(0).getItemData().getParams().getSwitches().get(1).get_switch());
-
+		assertEquals("off",home.getData().getThingInfo().getThingList().get(0).getItemData().getParams().getSwitches().get(0).get_switch());
+		assertEquals("on",home.getData().getThingInfo().getThingList().get(0).getItemData().getParams().getSwitches().get(1).get_switch());
 	}
-
-
 
 	public static final String EXAMPLE_MULTI_CHANNEL = "\n" +
 			"\n" +
