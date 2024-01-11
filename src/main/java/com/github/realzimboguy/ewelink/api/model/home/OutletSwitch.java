@@ -1,5 +1,6 @@
 package com.github.realzimboguy.ewelink.api.model.home;
 
+import com.github.realzimboguy.ewelink.api.model.DeviceStatus;
 import com.google.gson.annotations.SerializedName;
 
 public class OutletSwitch {
@@ -10,8 +11,8 @@ public class OutletSwitch {
 	public int getOutlet() {
         return outlet;
     }
-    public String get_switch() {
-        return _switch;
+    public DeviceStatus getDeviceStatus() {
+        return DeviceStatus.fromString(_switch);
     }
 
     @Override

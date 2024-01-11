@@ -20,7 +20,7 @@ public class ItemData {
     private Family__1 family;
     private List<Object> shareTo;
     private String devicekey;
-    private Boolean online;
+    private boolean online;
     private Params params;
     private Boolean isSupportGroup;
     private Boolean isSupportedOnMP;
@@ -87,7 +87,7 @@ public class ItemData {
         return devicekey;
     }
 
-    public Boolean getOnline() {
+    public boolean isOnline() {
         return online;
     }
 

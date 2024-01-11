@@ -14,6 +14,7 @@ import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -181,6 +182,12 @@ public class EweLink implements Closeable {
     
     public List<Thing> getThings() throws Exception {
         return getHomePage().getData().getThingInfo().getThingList();
+    }
+    
+    public Optional<Thing> getThing(String deviceId) throws Exception {
+        return getHomePage().getData().getThingInfo().getThingList().stream()
+                .filter(t -> deviceId.equals(t.getItemData().getDeviceid()))
+                .findAny();
     }
 
     public Homepage getHomePage() throws Exception {

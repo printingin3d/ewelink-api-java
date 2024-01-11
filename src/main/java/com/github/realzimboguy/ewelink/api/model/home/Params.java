@@ -3,6 +3,7 @@ package com.github.realzimboguy.ewelink.api.model.home;
 
 import java.util.List;
 
+import com.github.realzimboguy.ewelink.api.model.DeviceStatus;
 import com.google.gson.annotations.SerializedName;
 
 
@@ -81,8 +82,8 @@ public class Params {
     public List<Integer> getAlarmPValue() {
         return alarmPValue;
     }
-    public String getSwitch() {
-        return _switch;
+    public DeviceStatus getDeviceStatus() {
+        return DeviceStatus.fromString(_switch);
     }
     public void setSwitch(String _switch) {
         this._switch = _switch;

@@ -17,12 +17,8 @@ public class TestCode {
     private static final Logger logger = LoggerFactory.getLogger(TestCode.class);
 
     public static void main(String[] args) {
-
-
         Gson gson = new Gson();
-        EweLink eweLink = new EweLink("eu", "test@gmail.com", "test", "+263",60);
-
-        try {
+        try (EweLink eweLink = new EweLink("eu", "test@gmail.com", "test", "+263",60)) {
             List<Thing> things = eweLink.getThings();
 
             logger.info("PRINT DEVICE_ID, NAME, ONLINE, SWITCH, VOLTAGE");
@@ -30,8 +26,8 @@ public class TestCode {
                 logger.info("{}, {}, {}, {}, {}",
                         thing.getItemData().getDeviceid() ,
                         thing.getItemData().getName() ,
-                        thing.getItemData().getOnline(),
-                        thing.getItemData().getParams().getSwitch(),
+                        thing.getItemData().isOnline(),
+                        thing.getItemData().getParams().getDeviceStatus(),
                         thing.getItemData().getParams().getVoltage());
             }
             logger.info("PRINT JSON OBJECTS");
@@ -57,7 +53,7 @@ public class TestCode {
                         StringBuilder sb = new StringBuilder();
                         sb.append("Device:").append(rsp.getDeviceid()).append(" - ");
                         if (rsp.getParams() != null) {
-                            sb.append("Switch:").append(rsp.getParams().getSwitch()).append(" - ");
+                            sb.append("Switch:").append(rsp.getParams().getDeviceStatus()).append(" - ");
                             sb.append("Voltage:").append(rsp.getParams().getVoltage()).append(" - ");
                             sb.append("Power:").append(rsp.getParams().getPower()).append(" - ");
                             sb.append("Current:").append(rsp.getParams().getCurrent()).append(" - ");

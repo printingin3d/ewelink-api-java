@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
+import com.github.realzimboguy.ewelink.api.model.DeviceStatus;
 import com.github.realzimboguy.ewelink.api.model.home.Homepage;
 import com.google.gson.Gson;
 
@@ -15,7 +16,8 @@ public class TestMultiDeviceParsing {
 
 		Homepage home = gson.fromJson(EXAMPLE_NORMAL, Homepage.class);
 
-		assertEquals("off",home.getData().getThingInfo().getThingList().get(0).getItemData().getParams().getSwitch());
+		assertEquals(DeviceStatus.OFF, 
+		        home.getData().getThingInfo().getThingList().get(0).getItemData().getParams().getDeviceStatus());
 	}
 
 	@Test
@@ -24,8 +26,10 @@ public class TestMultiDeviceParsing {
 
 		Homepage home = gson.fromJson(EXAMPLE_MULTI_CHANNEL, Homepage.class);
 
-		assertEquals("off",home.getData().getThingInfo().getThingList().get(0).getItemData().getParams().getSwitches().get(0).get_switch());
-		assertEquals("on",home.getData().getThingInfo().getThingList().get(0).getItemData().getParams().getSwitches().get(1).get_switch());
+		assertEquals(DeviceStatus.OFF, 
+		        home.getData().getThingInfo().getThingList().get(0).getItemData().getParams().getSwitches().get(0).getDeviceStatus());
+		assertEquals(DeviceStatus.ON, 
+		        home.getData().getThingInfo().getThingList().get(0).getItemData().getParams().getSwitches().get(1).getDeviceStatus());
 	}
 
 	public static final String EXAMPLE_MULTI_CHANNEL = "\n" +
