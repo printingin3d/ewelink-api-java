@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -27,6 +28,11 @@ import javax.net.ssl.HttpsURLConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.realzimboguy.ewelink.api.errors.EweDeviceNotFoundException;
+import com.github.realzimboguy.ewelink.api.errors.EweException;
+import com.github.realzimboguy.ewelink.api.errors.EweLoginException;
+import com.github.realzimboguy.ewelink.api.errors.EweResponseException;
+import com.github.realzimboguy.ewelink.api.errors.EweSecurityException;
 import com.github.realzimboguy.ewelink.api.model.DeviceStatus;
 import com.github.realzimboguy.ewelink.api.model.StatusChange;
 import com.github.realzimboguy.ewelink.api.model.home.Homepage;
@@ -41,6 +47,8 @@ import com.google.gson.Gson;
 
 
 public class EweLink implements Closeable {
+    private static final String HMAC_SHA256 = "HmacSHA256";
+    
     public static final String APP_ID = "Uw83EKZFxdif7XFXEsrpduz5YyjP7nTl";
     private static final String APP_SECRET = "mXLOjea0woSMvK9gw7Fjsy7YlFO4iSu6";
     private static final int TIMEOUT = 5000;
@@ -95,73 +103,80 @@ public class EweLink implements Closeable {
         this(region, email, password, countryCode, activityTimer, executor, false);
     }
 
-    private void dologin() throws Exception {
+    private void dologin() throws EweException {
         if (!isLoggedIn || lastActivity + (activityTimer * 60 * 1000) < new Date().getTime()) {
-            URL url = new URL(baseUrl + "user/login");
-    
-            HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
-            conn.setRequestMethod("POST");
-            conn.setDoInput(true);
-            conn.setDoOutput(true);
-            conn.setRequestProperty("Content-Type", "application/json; utf-8");
-            conn.setRequestProperty("Accept", "application/json");
-    
-            conn.setConnectTimeout(TIMEOUT);
-            conn.setReadTimeout(TIMEOUT);
-            
-            LoginRequest loginRequest = new LoginRequest(email, password, countryCode, "en");
-    
-            conn.setRequestProperty("Content-Type","application/json" );
-            conn.setRequestProperty("Authorization","Sign " +getAuthMac(gson.toJson(loginRequest)));
-            conn.setRequestProperty("X-Ck-Nonce",Util.getNonce());
-            conn.setRequestProperty("X-Ck-Appid",APP_ID);
-    
-            LOGGER.info("Login Request: {}", loginRequest);
-    
-            try (DataOutputStream wr = new DataOutputStream(conn.getOutputStream())) {
-                wr.writeBytes(gson.toJson(loginRequest));
+            try {
+                URL url = new URL(baseUrl + "user/login");
         
-                wr.flush();
-            }
-            int responseCode = conn.getResponseCode();
-    
-            LOGGER.info("Login Response Code :"+ responseCode);
-    
-            try(BufferedReader br = new BufferedReader(
-                    new InputStreamReader(conn.getInputStream(), "utf-8"))) {
-                StringBuilder response = new StringBuilder();
-                String responseLine = null;
-                while ((responseLine = br.readLine()) != null) {
-                    response.append(responseLine.trim());
+                HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
+                conn.setRequestMethod("POST");
+                conn.setDoInput(true);
+                conn.setDoOutput(true);
+                conn.setRequestProperty("Content-Type", "application/json; utf-8");
+                conn.setRequestProperty("Accept", "application/json");
+        
+                conn.setConnectTimeout(TIMEOUT);
+                conn.setReadTimeout(TIMEOUT);
+                
+                LoginRequest loginRequest = new LoginRequest(email, password, countryCode, "en");
+        
+                conn.setRequestProperty("Content-Type","application/json" );
+                conn.setRequestProperty("Authorization","Sign " +getAuthMac(gson.toJson(loginRequest)));
+                conn.setRequestProperty("X-Ck-Nonce",Util.getNonce());
+                conn.setRequestProperty("X-Ck-Appid",APP_ID);
+        
+                LOGGER.info("Login Request: {}", loginRequest);
+        
+                try (DataOutputStream wr = new DataOutputStream(conn.getOutputStream())) {
+                    wr.writeBytes(gson.toJson(loginRequest));
+            
+                    wr.flush();
                 }
-                LOGGER.info("Login Response Raw: {}", response);
-    
-                LoginResponse loginResponse = gson.fromJson(response.toString(), LoginResponse.class);
-    
-                if (loginResponse.getError() > 0){
-                    //something wrong with login, throw exception back up with msg
-                    throw new Exception(loginResponse.getMsg());
-                }
-                else {
+                int responseCode = conn.getResponseCode();
+        
+                LOGGER.info("Login Response Code :"+ responseCode);
+        
+                try(BufferedReader br = new BufferedReader(
+                        new InputStreamReader(conn.getInputStream(), "utf-8"))) {
+                    StringBuilder response = new StringBuilder();
+                    String responseLine = null;
+                    while ((responseLine = br.readLine()) != null) {
+                        response.append(responseLine.trim());
+                    }
+                    LOGGER.debug("Login Response Raw: {}", response);
+        
+                    LoginResponse loginResponse = gson.fromJson(response.toString(), LoginResponse.class);
+        
+                    if (loginResponse.getError() > 0){
+                        //something wrong with login, throw exception back up with msg
+                        throw new EweLoginException(loginResponse.getMsg());
+                    }
                     accessToken = loginResponse.getData().getAt();
                     apiKey = loginResponse.getData().getUser().getApikey();
-                    LOGGER.info("accessToken: {}", accessToken);
-                    LOGGER.info("apiKey: {}", apiKey);
+                    LOGGER.debug("accessToken: {}", accessToken);
+                    LOGGER.debug("apiKey: {}", apiKey);
     
                     isLoggedIn = true;
                     lastActivity = new Date().getTime();
                 }
+                createClient();
             }
-            createClient();
+            catch (IOException e) {
+                throw new EweLoginException("Exception caught during login", e);
+            }
         }
     }
     
-    private void createClient() throws Exception {
+    private void createClient() throws IOException {
         if (eweLinkWebSocketClient!=null) {
             eweLinkWebSocketClient.close();
         }
         
-        eweLinkWebSocketClient = new EweLinkWebSocketClient(new URI("wss://"+ region+"-pconnect3.coolkit.cc:8080/api/ws"));
+        try {
+            eweLinkWebSocketClient = new EweLinkWebSocketClient(new URI("wss://"+ region+"-pconnect3.coolkit.cc:8080/api/ws"));
+        } catch (URISyntaxException e) {
+            throw new EweException(e);
+        }
         eweLinkWebSocketClient.setWssResponse(clientWssResponse);
         eweLinkWebSocketClient.setWssLogin(gson.toJson(new WssLogin(accessToken, apiKey, APP_ID, Util.getNonce())));
         eweLinkWebSocketClient.connect();
@@ -180,69 +195,72 @@ public class EweLink implements Closeable {
         }
     }
     
-    public List<Thing> getThings() throws Exception {
+    public List<Thing> getThings() throws EweException {
         return getHomePage().getData().getThingInfo().getThingList();
     }
     
-    public Optional<Thing> getThing(String deviceId) throws Exception {
+    public Optional<Thing> getThing(String deviceId) throws EweException {
         return getHomePage().getData().getThingInfo().getThingList().stream()
                 .filter(t -> deviceId.equals(t.getItemData().getDeviceid()))
                 .findAny();
     }
 
-    public Homepage getHomePage() throws Exception {
+    public Homepage getHomePage() throws EweException {
         dologin();
 
-        URL url = new URL(baseUrl + "homepage");
-        HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
-        conn.setRequestMethod("POST");
-        conn.setDoInput(true);
-        conn.setDoOutput(true);
-        conn.setRequestProperty("Content-Type","application/json" );
-        conn.setRequestProperty("Accept", "application/json");
-        conn.setRequestProperty("Authorization","Bearer " +accessToken);
-        conn.setConnectTimeout(TIMEOUT);
-        conn.setReadTimeout(TIMEOUT);
-
-        try (DataOutputStream wr = new DataOutputStream(conn.getOutputStream())) {
-            wr.writeBytes("{\n" +
-                    "  \"getFamily\": {},\n" +
-                    "  \"getThing\": {\n" +
-                    "    \"num\": 300\n" +
-                    "  },\n" +
-                    "  \"lang\": \"en\"\n" +
-                    "}");
+        try {
+            URL url = new URL(baseUrl + "homepage");
+            HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setDoInput(true);
+            conn.setDoOutput(true);
+            conn.setRequestProperty("Content-Type","application/json" );
+            conn.setRequestProperty("Accept", "application/json");
+            conn.setRequestProperty("Authorization","Bearer " +accessToken);
+            conn.setConnectTimeout(TIMEOUT);
+            conn.setReadTimeout(TIMEOUT);
     
-            wr.flush();
-        }
-
-        try (BufferedReader br = new BufferedReader(
-                new InputStreamReader(conn.getInputStream(), "utf-8"))) {
-            StringBuilder response = new StringBuilder();
-            String responseLine = null;
-            while ((responseLine = br.readLine()) != null) {
-                response.append(responseLine.trim());
+            try (DataOutputStream wr = new DataOutputStream(conn.getOutputStream())) {
+                wr.writeBytes("{\n" +
+                        "  \"getFamily\": {},\n" +
+                        "  \"getThing\": {\n" +
+                        "    \"num\": 300\n" +
+                        "  },\n" +
+                        "  \"lang\": \"en\"\n" +
+                        "}");
+        
+                wr.flush();
             }
-            LOGGER.debug("getHome Response Raw: {}", response.toString());
-
-            Homepage homepage = gson.fromJson(response.toString(), Homepage.class);
-
-            LOGGER.debug("getHome Response: {}", gson.toJson(homepage));
-
-            if (homepage.getError() > 0) {
-                //something wrong with login, throw exception back up with msg
-                throw new Exception("getHome Error:" + gson.toJson(homepage));
-
-            }
-            else {
+    
+            try (BufferedReader br = new BufferedReader(
+                    new InputStreamReader(conn.getInputStream(), "utf-8"))) {
+                StringBuilder response = new StringBuilder();
+                String responseLine = null;
+                while ((responseLine = br.readLine()) != null) {
+                    response.append(responseLine.trim());
+                }
+                LOGGER.debug("getHome Response Raw: {}", response.toString());
+    
+                Homepage homepage = gson.fromJson(response.toString(), Homepage.class);
+    
+                LOGGER.debug("getHome Response: {}", gson.toJson(homepage));
+    
+                if (homepage.getError() > 0) {
+                    //something wrong with login, throw exception back up with msg
+                    throw new EweResponseException("getHome Error:" + gson.toJson(homepage));
+    
+                }
                 LOGGER.info("getHome: {}", gson.toJson(homepage));
                 lastActivity = new Date().getTime();
                 return homepage;
             }
         }
+        catch (IOException e) {
+            throw new EweException(e);
+        }
     }
 
-    public boolean setDeviceStatusByName(String name, DeviceStatus status) throws Exception{
+    public boolean setDeviceStatusByName(String name, DeviceStatus status) throws EweException {
         dologin();
 
         String selectedDeviceId = null;
@@ -253,13 +271,13 @@ public class EweLink implements Closeable {
         }
 
         if (selectedDeviceId == null) {
-            throw new Exception("No Device id Found for Device Name:" + name);
+            throw new EweDeviceNotFoundException("No Device id Found for Device Name:" + name);
         }
 
         return setDeviceStatus(selectedDeviceId,status);
     }
 
-    public boolean setDeviceStatus(String deviceId, DeviceStatus status) throws Exception{
+    public boolean setDeviceStatus(String deviceId, DeviceStatus status) throws EweException {
         dologin();
 
         LOGGER.info("Setting device {} status to {}",deviceId,status);
@@ -287,9 +305,9 @@ public class EweLink implements Closeable {
      * @param deviceId
      * @param outletSwitches
      * @return
-     * @throws Exception
+     * @throws EweException
      */
-    public boolean setMultiDeviceStatus(String deviceId, List<OutletSwitch> outletSwitches) throws Exception{
+    public boolean setMultiDeviceStatus(String deviceId, List<OutletSwitch> outletSwitches) throws EweException {
         dologin();
 
         LOGGER.info("Setting device {} status on multi output {}",deviceId,gson.toJson(outletSwitches));
@@ -310,19 +328,19 @@ public class EweLink implements Closeable {
         return eweLinkWebSocketClient.sendAndWait(gson.toJson(statusChange),statusChange.getSequence());
     }
 
-    private static String getAuthMac (String data) throws UnsupportedEncodingException, NoSuchAlgorithmException, InvalidKeyException {
-
-        Mac sha256_HMAC = null;
-
+    private static String getAuthMac (String data) throws UnsupportedEncodingException, EweSecurityException {
         byte[] byteKey = APP_SECRET.getBytes("UTF-8");
-        final String HMAC_SHA256 = "HmacSHA256";
-        sha256_HMAC = Mac.getInstance(HMAC_SHA256);
-        SecretKeySpec keySpec = new SecretKeySpec(byteKey, HMAC_SHA256);
-        sha256_HMAC.init(keySpec);
-        byte[] mac_data = sha256_HMAC.
-                doFinal(data.getBytes("UTF-8"));
-
-        return Base64.getEncoder().encodeToString(mac_data);
+        Mac sha256_HMAC;
+        try {
+            sha256_HMAC = Mac.getInstance(HMAC_SHA256);
+            SecretKeySpec keySpec = new SecretKeySpec(byteKey, HMAC_SHA256);
+            sha256_HMAC.init(keySpec);
+            byte[] mac_data = sha256_HMAC.
+                    doFinal(data.getBytes("UTF-8"));
+            return Base64.getEncoder().encodeToString(mac_data);
+        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+            throw new EweSecurityException(e);
+        }
     }
 
     private class WebSocketMonitor implements Runnable {

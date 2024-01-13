@@ -10,6 +10,7 @@ import org.java_websocket.handshake.ServerHandshake;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.realzimboguy.ewelink.api.errors.EweException;
 import com.github.realzimboguy.ewelink.api.wss.WssResponse;
 import com.github.realzimboguy.ewelink.api.wss.wssrsp.WssRspMsg;
 import com.google.gson.Gson;
@@ -86,14 +87,18 @@ public class EweLinkWebSocketClient extends WebSocketClient {
         }
     }
 
-    public boolean sendAndWait(String text, String sequence) throws InterruptedException {
+    public boolean sendAndWait(String text, String sequence) throws EweException {
         send(text);
 
         //waits a total of 15 seconds
 
         for (int i = 0; i < 30; i++) {
             //wait 1 second
-            Thread.sleep(500);
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                throw new EweException(e);
+            }
 
             if (map.containsKey(sequence)){
                 WssRspMsg s = map.remove(sequence);

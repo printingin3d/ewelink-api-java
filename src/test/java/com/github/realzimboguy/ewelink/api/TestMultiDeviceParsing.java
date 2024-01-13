@@ -1,8 +1,9 @@
 package com.github.realzimboguy.ewelink.api;
 
-import static org.junit.Assert.assertEquals;
 
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import org.junit.jupiter.api.Test;
 
 import com.github.realzimboguy.ewelink.api.model.DeviceStatus;
 import com.github.realzimboguy.ewelink.api.model.home.Homepage;
