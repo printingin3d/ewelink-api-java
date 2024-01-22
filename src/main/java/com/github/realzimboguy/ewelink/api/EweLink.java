@@ -174,12 +174,15 @@ public class EweLink implements Closeable {
         
         try {
             eweLinkWebSocketClient = new EweLinkWebSocketClient(new URI("wss://"+ region+"-pconnect3.coolkit.cc:8080/api/ws"));
-        } catch (URISyntaxException e) {
+            eweLinkWebSocketClient.setWssResponse(clientWssResponse);
+            eweLinkWebSocketClient.setWssLogin(gson.toJson(new WssLogin(accessToken, apiKey, APP_ID, Util.getNonce())));
+            
+            if (!eweLinkWebSocketClient.connectBlocking()) {
+                throw new EweException("Cannot make websocket connection");
+            }
+        } catch (URISyntaxException | InterruptedException e) {
             throw new EweException(e);
         }
-        eweLinkWebSocketClient.setWssResponse(clientWssResponse);
-        eweLinkWebSocketClient.setWssLogin(gson.toJson(new WssLogin(accessToken, apiKey, APP_ID, Util.getNonce())));
-        eweLinkWebSocketClient.connect();
 
         if (monitorThread!=null) {
             monitorThread.cancel(false);
