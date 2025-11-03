@@ -102,64 +102,74 @@ public class EweLink implements Closeable {
             ScheduledExecutorService executor) {
         this(region, email, password, countryCode, activityTimer, executor, false);
     }
+    
+    public synchronized void logout() {
+        accessToken = null;
+        apiKey = null;
+
+        isLoggedIn = false;
+        lastActivity = 0L;
+    }
 
     private void dologin() throws EweException {
         if (!isLoggedIn || lastActivity + (activityTimer * 60 * 1000) < new Date().getTime()) {
             try {
-                URL url = new URL(baseUrl + "user/login");
-        
-                HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
-                conn.setRequestMethod("POST");
-                conn.setDoInput(true);
-                conn.setDoOutput(true);
-                conn.setRequestProperty("Content-Type", "application/json; utf-8");
-                conn.setRequestProperty("Accept", "application/json");
-        
-                conn.setConnectTimeout(TIMEOUT);
-                conn.setReadTimeout(TIMEOUT);
-                
-                LoginRequest loginRequest = new LoginRequest(email, password, countryCode, "en");
-        
-                conn.setRequestProperty("Content-Type","application/json" );
-                conn.setRequestProperty("Authorization","Sign " +getAuthMac(gson.toJson(loginRequest)));
-                conn.setRequestProperty("X-Ck-Nonce",Util.getNonce());
-                conn.setRequestProperty("X-Ck-Appid",APP_ID);
-        
-                LOGGER.info("Login Request: {}", loginRequest);
-        
-                try (DataOutputStream wr = new DataOutputStream(conn.getOutputStream())) {
-                    wr.writeBytes(gson.toJson(loginRequest));
+                synchronized (this) {
+                    URL url = new URL(baseUrl + "user/login");
             
-                    wr.flush();
-                }
-                int responseCode = conn.getResponseCode();
-        
-                LOGGER.info("Login Response Code :"+ responseCode);
-        
-                try(BufferedReader br = new BufferedReader(
-                        new InputStreamReader(conn.getInputStream(), "utf-8"))) {
-                    StringBuilder response = new StringBuilder();
-                    String responseLine = null;
-                    while ((responseLine = br.readLine()) != null) {
-                        response.append(responseLine.trim());
+                    HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
+                    conn.setRequestMethod("POST");
+                    conn.setDoInput(true);
+                    conn.setDoOutput(true);
+                    conn.setRequestProperty("Content-Type", "application/json; utf-8");
+                    conn.setRequestProperty("Accept", "application/json");
+            
+                    conn.setConnectTimeout(TIMEOUT);
+                    conn.setReadTimeout(TIMEOUT);
+                    
+                    LoginRequest loginRequest = new LoginRequest(email, password, countryCode, "en");
+            
+                    conn.setRequestProperty("Content-Type","application/json" );
+                    conn.setRequestProperty("Authorization","Sign " +getAuthMac(gson.toJson(loginRequest)));
+                    conn.setRequestProperty("X-Ck-Nonce",Util.getNonce());
+                    conn.setRequestProperty("X-Ck-Appid",APP_ID);
+            
+                    LOGGER.info("Login Request: {}", loginRequest);
+            
+                    try (DataOutputStream wr = new DataOutputStream(conn.getOutputStream())) {
+                        wr.writeBytes(gson.toJson(loginRequest));
+                
+                        wr.flush();
                     }
-                    LOGGER.debug("Login Response Raw: {}", response);
+                    int responseCode = conn.getResponseCode();
+            
+                    LOGGER.info("Login Response Code :"+ responseCode);
+            
+                    try(BufferedReader br = new BufferedReader(
+                            new InputStreamReader(conn.getInputStream(), "utf-8"))) {
+                        StringBuilder response = new StringBuilder();
+                        String responseLine = null;
+                        while ((responseLine = br.readLine()) != null) {
+                            response.append(responseLine.trim());
+                        }
+                        LOGGER.debug("Login Response Raw: {}", response);
+            
+                        LoginResponse loginResponse = gson.fromJson(response.toString(), LoginResponse.class);
+            
+                        if (loginResponse.getError() > 0){
+                            //something wrong with login, throw exception back up with msg
+                            throw new EweLoginException(loginResponse.getMsg());
+                        }
+                        accessToken = loginResponse.getData().getAt();
+                        apiKey = loginResponse.getData().getUser().getApikey();
+                        LOGGER.debug("accessToken: {}", accessToken);
+                        LOGGER.debug("apiKey: {}", apiKey);
         
-                    LoginResponse loginResponse = gson.fromJson(response.toString(), LoginResponse.class);
-        
-                    if (loginResponse.getError() > 0){
-                        //something wrong with login, throw exception back up with msg
-                        throw new EweLoginException(loginResponse.getMsg());
+                        isLoggedIn = true;
+                        lastActivity = new Date().getTime();
                     }
-                    accessToken = loginResponse.getData().getAt();
-                    apiKey = loginResponse.getData().getUser().getApikey();
-                    LOGGER.debug("accessToken: {}", accessToken);
-                    LOGGER.debug("apiKey: {}", apiKey);
-    
-                    isLoggedIn = true;
-                    lastActivity = new Date().getTime();
+                    createClient();
                 }
-                createClient();
             }
             catch (IOException e) {
                 throw new EweLoginException("Exception caught during login", e);
