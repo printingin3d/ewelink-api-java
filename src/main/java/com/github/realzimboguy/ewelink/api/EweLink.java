@@ -12,6 +12,7 @@ import java.net.URL;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -320,10 +321,10 @@ public class EweLink implements Closeable {
      * @return
      * @throws EweException
      */
-    public boolean setMultiDeviceStatus(String deviceId, List<OutletSwitch> outletSwitches) throws EweException {
+    public boolean setMultiDeviceStatus(String deviceId, int outlet, DeviceStatus status) throws EweException {
         dologin();
 
-        LOGGER.info("Setting device {} status on multi output {}",deviceId,gson.toJson(outletSwitches));
+        LOGGER.info("Setting device {} status on outlet {} to {}",deviceId,outlet,status);
 
         StatusChange statusChange = new StatusChange();
         statusChange.setSequence(new Date().getTime() + "");
@@ -333,6 +334,8 @@ public class EweLink implements Closeable {
         statusChange.setApikey(apiKey);
         statusChange.setSelfApikey(apiKey);
         Params params = new Params();
+        List<OutletSwitch> outletSwitches = Collections.singletonList(
+                new OutletSwitch(outlet, status.getStringValue()));
         params.setSwitches(outletSwitches);
         statusChange.setParams(params);
 

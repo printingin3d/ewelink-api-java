@@ -8,7 +8,13 @@ public class OutletSwitch {
 	@SerializedName("switch")
 	private String _switch;
 
-	public int getOutlet() {
+	public OutletSwitch() {}
+	
+	public OutletSwitch(int outlet, String _switch) {
+        this.outlet = outlet;
+        this._switch = _switch;
+    }
+    public int getOutlet() {
         return outlet;
     }
     public DeviceStatus getDeviceStatus() {
