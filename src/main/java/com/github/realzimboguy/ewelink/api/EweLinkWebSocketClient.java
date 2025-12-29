@@ -100,8 +100,8 @@ public class EweLinkWebSocketClient extends WebSocketClient {
                 throw new EweException(e);
             }
 
-            if (map.containsKey(sequence)){
-                WssRspMsg s = map.remove(sequence);
+            WssRspMsg s = map.remove(sequence);
+            if (s!=null) {
                 return s.getError() != null && s.getError().intValue()==0;
             }
         }
